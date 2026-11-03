@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/communicator"
 	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/pathing"
+	"github.com/hashicorp/packer-plugin-sdk/shutdowncommand"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 
@@ -209,6 +210,8 @@ type Config struct {
 	Comm              communicator.Config `mapstructure:",squash"`
 	PortForwardConfig `mapstructure:",squash"`
 
+	shutdowncommand.ShutdownConfig `mapstructure:",squash"`
+
 	// Deprecated: use ssh_port.
 	SSHRemotePort int `mapstructure:"ssh_remote_port" required:"false" undocumented:"true"`
 	// Deprecated: use winrm_port.
@@ -381,6 +384,14 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 		if c.Comm.SSHProxyHost != "" {
 			errs = packersdk.MultiErrorAppend(errs, errors.New("ssh_proxy_host is not supported: the builder connects to the VM through a port forward on this machine"))
 		}
+	}
+
+	errs = packersdk.MultiErrorAppend(errs, c.ShutdownConfig.Prepare(&c.ctx)...)
+	if c.ShutdownTimeout < 0 {
+		errs = packersdk.MultiErrorAppend(errs, errors.New("shutdown_timeout must not be negative"))
+	}
+	if strings.TrimSpace(c.ShutdownCommand) != "" && c.Comm.Type != "ssh" && c.Comm.Type != "winrm" {
+		errs = packersdk.MultiErrorAppend(errs, errors.New("shutdown_command requires an ssh or winrm communicator"))
 	}
 
 	// Without a communicator the build stops the VM right after the boot

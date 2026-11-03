@@ -33,6 +33,32 @@ build {
 }
 ```
 
+## Graceful Shutdown
+
+By default, the builder stops the temporary VM through the KubeVirt API once
+provisioning completes. Set `shutdown_command` to instead run a command in the
+guest over the communicator, and wait up to `shutdown_timeout` for the guest to
+power itself off before the disk is captured. This is where to seal an image,
+for example with Sysprep on Windows:
+
+```hcl
+communicator     = "winrm"
+winrm_username   = "Administrator"
+winrm_password   = var.winrm_password
+shutdown_command = "C:\\Windows\\System32\\Sysprep\\sysprep.exe /generalize /oobe /shutdown /quiet"
+shutdown_timeout = "15m"
+```
+
+The command is opaque to the builder: it can run Sysprep, a cloud-init
+cleanup, or a plain `shutdown`.
+
+Before running the command, the builder switches the temporary VM from the
+`Always` run strategy to `RerunOnFailure`, so that KubeVirt does not restart it
+once the guest powers off, which would boot a generalized Windows image back
+into OOBE. A crash is still retried, and the installation itself still runs
+under `Always`, so a kickstart that ends in `poweroff` still boots into the
+installed system.
+
 ## KubeVirt-ISO Builder Configuration Reference
 
 ### Required Configuration
@@ -447,3 +473,26 @@ KubeVirt API, which listens on `ssh_host` or `winrm_host` (defaults to
   [here](https://msdn.microsoft.com/en-us/library/aa384295(v=vs.85).aspx).
 
 <!-- End of code generated from the comments of the WinRM struct in communicator/config.go; -->
+
+
+### Shutdown Configuration
+
+`shutdown_command` requires an `ssh` or `winrm` communicator.
+
+<!-- Code generated from the comments of the ShutdownConfig struct in shutdowncommand/config.go; DO NOT EDIT MANUALLY -->
+
+- `shutdown_command` (string) - The command to use to gracefully shut down the machine once all
+  provisioning is complete. By default this is an empty string, which
+  tells Packer to just forcefully shut down the machine. This setting can
+  be safely omitted if for example, a shutdown command to gracefully halt
+  the machine is configured inside a provisioning script. If one or more
+  scripts require a reboot it is suggested to leave this blank (since
+  reboots may fail) and instead specify the final shutdown command in your
+  last script.
+
+- `shutdown_timeout` (duration string | ex: "1h5m2s") - The amount of time to wait after executing the shutdown_command for the
+  virtual machine to actually shut down. If the machine doesn't shut down
+  in this time it is considered an error. By default, the time out is "5m"
+  (five minutes).
+
+<!-- End of code generated from the comments of the ShutdownConfig struct in shutdowncommand/config.go; -->

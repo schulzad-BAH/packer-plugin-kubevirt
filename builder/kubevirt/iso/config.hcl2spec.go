@@ -93,6 +93,8 @@ type FlatConfig struct {
 	WinRMUseNTLM              *bool             `mapstructure:"winrm_use_ntlm" cty:"winrm_use_ntlm" hcl:"winrm_use_ntlm"`
 	SSHLocalPort              *int              `mapstructure:"ssh_local_port" required:"false" cty:"ssh_local_port" hcl:"ssh_local_port"`
 	WinRMLocalPort            *int              `mapstructure:"winrm_local_port" required:"false" cty:"winrm_local_port" hcl:"winrm_local_port"`
+	ShutdownCommand           *string           `mapstructure:"shutdown_command" required:"false" cty:"shutdown_command" hcl:"shutdown_command"`
+	ShutdownTimeout           *string           `mapstructure:"shutdown_timeout" required:"false" cty:"shutdown_timeout" hcl:"shutdown_timeout"`
 	SSHRemotePort             *int              `mapstructure:"ssh_remote_port" required:"false" undocumented:"true" cty:"ssh_remote_port" hcl:"ssh_remote_port"`
 	WinRMRemotePort           *int              `mapstructure:"winrm_remote_port" required:"false" undocumented:"true" cty:"winrm_remote_port" hcl:"winrm_remote_port"`
 	WinRMWaitTimeout          *string           `mapstructure:"winrm_wait_timeout" required:"false" undocumented:"true" cty:"winrm_wait_timeout" hcl:"winrm_wait_timeout"`
@@ -195,6 +197,8 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"winrm_use_ntlm":               &hcldec.AttrSpec{Name: "winrm_use_ntlm", Type: cty.Bool, Required: false},
 		"ssh_local_port":               &hcldec.AttrSpec{Name: "ssh_local_port", Type: cty.Number, Required: false},
 		"winrm_local_port":             &hcldec.AttrSpec{Name: "winrm_local_port", Type: cty.Number, Required: false},
+		"shutdown_command":             &hcldec.AttrSpec{Name: "shutdown_command", Type: cty.String, Required: false},
+		"shutdown_timeout":             &hcldec.AttrSpec{Name: "shutdown_timeout", Type: cty.String, Required: false},
 		"ssh_remote_port":              &hcldec.AttrSpec{Name: "ssh_remote_port", Type: cty.Number, Required: false},
 		"winrm_remote_port":            &hcldec.AttrSpec{Name: "winrm_remote_port", Type: cty.Number, Required: false},
 		"winrm_wait_timeout":           &hcldec.AttrSpec{Name: "winrm_wait_timeout", Type: cty.String, Required: false},

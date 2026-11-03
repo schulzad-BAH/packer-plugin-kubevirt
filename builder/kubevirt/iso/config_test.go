@@ -242,6 +242,32 @@ var _ = Describe("Config", func() {
 		})
 	})
 
+	Context("Prepare shutdown_command", func() {
+		It("defaults shutdown_timeout to five minutes", func() {
+			c := &iso.Config{}
+			_, err := c.Prepare(validRawConfig(map[string]interface{}{
+				"communicator":     "ssh",
+				"ssh_username":     "fedora",
+				"shutdown_command": "sudo shutdown -h now",
+			}))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(c.ShutdownCommand).To(Equal("sudo shutdown -h now"))
+			Expect(c.ShutdownTimeout).To(Equal(5 * time.Minute))
+		})
+
+		It("requires an ssh or winrm communicator", func() {
+			c := &iso.Config{}
+			_, err := c.Prepare(validRawConfig(map[string]interface{}{"shutdown_command": "sudo shutdown -h now"}))
+			Expect(err).To(MatchError(ContainSubstring("shutdown_command requires an ssh or winrm communicator")))
+		})
+
+		It("rejects a negative shutdown_timeout", func() {
+			c := &iso.Config{}
+			_, err := c.Prepare(validRawConfig(map[string]interface{}{"shutdown_timeout": "-1m"}))
+			Expect(err).To(MatchError(ContainSubstring("shutdown_timeout must not be negative")))
+		})
+	})
+
 	Context("Prepare communicator", func() {
 		It("uses the SDK defaults for SSH", func() {
 			c := &iso.Config{}

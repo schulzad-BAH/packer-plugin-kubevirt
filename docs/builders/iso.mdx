@@ -45,6 +45,32 @@ build {
 }
 ```
 
+## Graceful Shutdown
+
+By default, the builder stops the temporary VM through the KubeVirt API once
+provisioning completes. Set `shutdown_command` to instead run a command in the
+guest over the communicator, and wait up to `shutdown_timeout` for the guest to
+power itself off before the disk is captured. This is where to seal an image,
+for example with Sysprep on Windows:
+
+```hcl
+communicator     = "winrm"
+winrm_username   = "Administrator"
+winrm_password   = var.winrm_password
+shutdown_command = "C:\\Windows\\System32\\Sysprep\\sysprep.exe /generalize /oobe /shutdown /quiet"
+shutdown_timeout = "15m"
+```
+
+The command is opaque to the builder: it can run Sysprep, a cloud-init
+cleanup, or a plain `shutdown`.
+
+Before running the command, the builder switches the temporary VM from the
+`Always` run strategy to `RerunOnFailure`, so that KubeVirt does not restart it
+once the guest powers off, which would boot a generalized Windows image back
+into OOBE. A crash is still retried, and the installation itself still runs
+under `Always`, so a kickstart that ends in `poweroff` still boots into the
+installed system.
+
 ## KubeVirt-ISO Builder Configuration Reference
 
 ### Required Configuration
@@ -104,3 +130,9 @@ bastion host or a proxy cannot reach.
 #### Optional WinRM fields:
 
 @include 'packer-plugin-sdk/communicator/WinRM-not-required.mdx'
+
+### Shutdown Configuration
+
+`shutdown_command` requires an `ssh` or `winrm` communicator.
+
+@include 'packer-plugin-sdk/shutdowncommand/ShutdownConfig-not-required.mdx'

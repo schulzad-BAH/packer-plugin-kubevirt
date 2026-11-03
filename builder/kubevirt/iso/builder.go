@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
+	"github.com/hashicorp/packer-plugin-kubevirt/builder/kubevirt/common"
 	"github.com/hashicorp/packer-plugin-sdk/communicator"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/multistep/commonsteps"
@@ -90,6 +91,13 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 
 	steps = append(steps, b.provisionSteps()...)
 	steps = append(steps,
+		&common.StepShutdown{
+			Client:          b.client,
+			Name:            b.config.Name,
+			Namespace:       b.config.Namespace,
+			ShutdownCommand: b.config.ShutdownCommand,
+			ShutdownTimeout: b.config.ShutdownTimeout,
+		},
 		&StepStopVirtualMachine{
 			Config: b.config,
 			Client: b.client,
